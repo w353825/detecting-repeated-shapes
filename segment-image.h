@@ -25,6 +25,10 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA
 #include <filter.h>
 #include "segment-graph.h"
 
+#define RANDOM_COLOR 0
+#define AVERAGE_COLOR 1
+#define GREYSCALE_COLOR 2
+
 // random color
 rgb random_rgb(){ 
   rgb c;
@@ -56,8 +60,10 @@ static inline float diff(image<float> *r, image<float> *g, image<float> *b,
  * min_size: minimum component size (enforced by post-processing stage).
  * num_ccs: number of connected components in the segmentation.
  */
-image<rgb> *segment_image(image<rgb> *im, float sigma, float c, int min_size,
-			  int *num_ccs) {
+image<rgb> *segment_image(image<rgb> *im, float sigma, float c, int min_size, 
+    float ck, float cutoff, float proximity, float size, float color, 
+    float difference, float eccentricity, float theta, float mean_dist, 
+    int output_type, int *num_ccs) {
   int width = im->width();
   int height = im->height();
 
@@ -135,15 +141,84 @@ image<rgb> *segment_image(image<rgb> *im, float sigma, float c, int min_size,
 
   // pick random colors for each component
   rgb *colors = new rgb[width*height];
-  for (int i = 0; i < width*height; i++)
-    colors[i] = random_rgb();
-  
-  for (int y = 0; y < height; y++) {
-    for (int x = 0; x < width; x++) {
-      int comp = u->find(y * width + x);
-      imRef(output, x, y) = colors[comp];
-    }
-  }  
+  for (int i = 0; i < width*height; i++) {
+	  colors[i] = random_rgb();
+  }
+
+	switch(output_type) {
+	  case GREYSCALE_COLOR:
+		  for (int y = 0; y < height; y++) {
+			    for (int x = 0; x < width; x++) {
+			    	rgb this_pixel = imRef(im, x, y);
+			    	int grey_pixel = 
+			    	 (this_pixel.r + this_pixel.g + this_pixel.b) / 3;
+			      imRef(output, x, y).r = grey_pixel;
+			      imRef(output, x, y).g = grey_pixel;
+			      imRef(output, x, y).b = grey_pixel;
+			    }
+			}
+		  break;
+	  case AVERAGE_COLOR:
+		  // create a map from pixel to map.
+		  int *pixel_id = new int[width*height];
+		  int *pixel_id_to_comp = new int[width*height];
+		  int *comp_color_r = new int[width*height];
+		  int *comp_color_g = new int[width*height];
+		  int *comp_color_b = new int[width*height];
+		  int *comp_size = new int[width*height];
+		  for(int i = 0; i < width*height; i++) {
+		  	pixel_id[i] = width*height;
+		  	comp_color_r[i] = 0;
+		  	comp_color_g[i] = 0;
+		  	comp_color_b[i] = 0;
+		  	comp_size[i] = 0;
+		  }
+		  
+		  for (int y = 0; y < height; y++) {
+		    for (int x = 0; x < width; x++) {
+		      int comp = u->find(y * width + x);
+		      pixel_id_to_comp[width*height] =  pixel_id[comp];
+		    }
+		  }  
+		  // map complete 
+		  // now we can reference comp_(prop)[pixel_id_to_comp[i]]
+		  // to set comp_(prop)
+		  for (int y = 0; y < height; y++) {
+		    for (int x = 0; x < width; x++) {
+		    	int comp = pixel_id_to_comp[x*y];
+					comp_color_r[comp] += imRef(im, x, y).r;
+					comp_color_g[comp] += imRef(im, x, y).g;
+					comp_color_b[comp] += imRef(im, x, y).b;
+					comp_size[comp]++;
+		    }
+		  }  
+		  
+		  // finally, we can set the output colors
+		  for (int y = 0; y < height; y++) {
+		    for (int x = 0; x < width; x++) {
+		    	int comp = pixel_id_to_comp[x*y];
+					imRef(output, x, y).r = comp_color_r[comp] / comp_size[comp];
+					imRef(output, x, y).g = comp_color_g[comp] / comp_size[comp];
+					imRef(output, x, y).b = comp_color_b[comp] / comp_size[comp];
+		    }
+		  }
+		  delete [] pixel_id;
+		  delete [] pixel_id_to_comp;
+		  delete [] comp_color_r;
+		  delete [] comp_color_g;
+		  delete [] comp_color_b;
+		  delete [] comp_size;
+		  break;
+	case RANDOM_COLOR:
+	default:
+			for (int y = 0; y < height; y++) {
+			    for (int x = 0; x < width; x++) {
+			      int comp = u->find(y * width + x);
+			      imRef(output, x, y) = colors[comp];
+			    }
+			}
+			break;
+	}
 
   delete [] colors;  
   delete u;
