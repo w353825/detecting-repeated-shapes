@@ -145,6 +145,16 @@ image<rgb> *segment_image(image<rgb> *im, float sigma, float c, int min_size,
 	  colors[i] = random_rgb();
   }
 
+
+  // vars for AVERAGE_COLOR
+	int *pixel_id = new int[width*height];
+  int *pixel_id_to_comp = new int[width*height];
+  int *comp_color_r = new int[width*height];
+  int *comp_color_g = new int[width*height];
+  int *comp_color_b = new int[width*height];
+  int *comp_size = new int[width*height];
+  // end vars for AVERAGE_COLOR
+  
 	switch(output_type) {
 	  case GREYSCALE_COLOR:
 		  for (int y = 0; y < height; y++) {
@@ -160,12 +170,6 @@ image<rgb> *segment_image(image<rgb> *im, float sigma, float c, int min_size,
 		  break;
 	  case AVERAGE_COLOR:
 		  // create a map from pixel to map.
-		  int *pixel_id = new int[width*height];
-		  int *pixel_id_to_comp = new int[width*height];
-		  int *comp_color_r = new int[width*height];
-		  int *comp_color_g = new int[width*height];
-		  int *comp_color_b = new int[width*height];
-		  int *comp_size = new int[width*height];
 		  for(int i = 0; i < width*height; i++) {
 		  	pixel_id[i] = width*height;
 		  	comp_color_r[i] = 0;
@@ -202,12 +206,6 @@ image<rgb> *segment_image(image<rgb> *im, float sigma, float c, int min_size,
 					imRef(output, x, y).b = comp_color_b[comp] / comp_size[comp];
 		    }
 		  }
-		  delete [] pixel_id;
-		  delete [] pixel_id_to_comp;
-		  delete [] comp_color_r;
-		  delete [] comp_color_g;
-		  delete [] comp_color_b;
-		  delete [] comp_size;
 		  break;
 	case RANDOM_COLOR:
 	default:
@@ -220,6 +218,16 @@ image<rgb> *segment_image(image<rgb> *im, float sigma, float c, int min_size,
 			break;
 	}
 
+
+  // vars for AVERAGE_COLOR
+  delete [] pixel_id;
+  delete [] pixel_id_to_comp;
+  delete [] comp_color_r;
+  delete [] comp_color_g;
+  delete [] comp_color_b;
+  delete [] comp_size;
+  // end vars for AVERAGE_COLOR
+  
   delete [] colors;  
   delete u;
 
