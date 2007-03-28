@@ -201,9 +201,9 @@ image<rgb> *segment_image(image<rgb> *im, float sigma, float c, int min_size,
 		  for (int y = 0; y < height; y++) {
 		    for (int x = 0; x < width; x++) {
 		    	int comp = pixel_id_to_comp[x*y];
-					imRef(output, x, y).r = comp_color_r[comp] / comp_size[comp];
-					imRef(output, x, y).g = comp_color_g[comp] / comp_size[comp];
-					imRef(output, x, y).b = comp_color_b[comp] / comp_size[comp];
+					imRef(output, x, y).r = (uchar) comp_color_r[comp] / comp_size[comp];
+					imRef(output, x, y).g = (uchar) comp_color_g[comp] / comp_size[comp];
+					imRef(output, x, y).b = (uchar) comp_color_b[comp] / comp_size[comp];
 		    }
 		  }
 		  break;
