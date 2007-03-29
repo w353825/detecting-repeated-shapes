@@ -147,8 +147,6 @@ image<rgb> *segment_image(image<rgb> *im, float sigma, float c, int min_size,
 
 
   // vars for AVERAGE_COLOR
-	int *pixel_id = new int[width*height];
-  int *pixel_id_to_comp = new int[width*height];
   int *comp_color_r = new int[width*height];
   int *comp_color_g = new int[width*height];
   int *comp_color_b = new int[width*height];
@@ -171,39 +169,36 @@ image<rgb> *segment_image(image<rgb> *im, float sigma, float c, int min_size,
 	  case AVERAGE_COLOR:
 		  // create a map from pixel to map.
 		  for(int i = 0; i < width*height; i++) {
-		  	pixel_id[i] = width*height;
 		  	comp_color_r[i] = 0;
 		  	comp_color_g[i] = 0;
 		  	comp_color_b[i] = 0;
 		  	comp_size[i] = 0;
 		  }
-		  
-		  for (int y = 0; y < height; y++) {
-		    for (int x = 0; x < width; x++) {
-		      int comp = u->find(y * width + x);
-		      pixel_id_to_comp[width*height] =  pixel_id[comp];
-		    }
-		  }  
 		  // map complete 
 		  // now we can reference comp_(prop)[pixel_id_to_comp[i]]
 		  // to set comp_(prop)
 		  for (int y = 0; y < height; y++) {
 		    for (int x = 0; x < width; x++) {
-		    	int comp = pixel_id_to_comp[x*y];
+			    int comp = u->find(y * width + x);
 					comp_color_r[comp] += imRef(im, x, y).r;
 					comp_color_g[comp] += imRef(im, x, y).g;
 					comp_color_b[comp] += imRef(im, x, y).b;
 					comp_size[comp]++;
+					//printf("%d %d %d %d %d \n", comp, 
+					//  comp_color_r[comp], comp_color_g[comp], comp_color_b[comp], 
+					//  comp_size[comp]);
 		    }
 		  }  
 		  
 		  // finally, we can set the output colors
 		  for (int y = 0; y < height; y++) {
 		    for (int x = 0; x < width; x++) {
-		    	int comp = pixel_id_to_comp[x*y];
-					imRef(output, x, y).r = (uchar) comp_color_r[comp] / comp_size[comp];
-					imRef(output, x, y).g = (uchar) comp_color_g[comp] / comp_size[comp];
-					imRef(output, x, y).b = (uchar) comp_color_b[comp] / comp_size[comp];
+		    	int comp = u->find(y * width + x);
+					imRef(output, x, y).r = comp_color_r[comp] / comp_size[comp];
+					imRef(output, x, y).g = comp_color_g[comp] / comp_size[comp];
+					imRef(output, x, y).b = comp_color_b[comp] / comp_size[comp];
+					//printf("%d %d %d \n", 
+					//  imRef(output, x, y).r, imRef(output, x, y).g, imRef(output, x, y).b);
 		    }
 		  }
 		  break;
@@ -220,8 +215,6 @@ image<rgb> *segment_image(image<rgb> *im, float sigma, float c, int min_size,
 
 
   // vars for AVERAGE_COLOR
-  delete [] pixel_id;
-  delete [] pixel_id_to_comp;
   delete [] comp_color_r;
   delete [] comp_color_g;
   delete [] comp_color_b;
